@@ -1,0 +1,248 @@
+﻿@page "/openweather"
+@rendermode @(new InteractiveServerRenderMode(prerender: false))
+@using WeatherBlazorApp1.Models
+@using WeatherBlazorApp1.Services
+@attribute [StreamRendering]
+@inject IServiceProvider ServiceProvider
+@inject ILogger<OpenWeather> Logger
+
+<TelerikRootComponent>
+<PageTitle>Current Weather</PageTitle>
+
+<h2>The Weather of</h2>
+
+    <select @onchange="OnCityChanged" class="form-select" aria-label="City Selector" style="width: 20%;border-color: #eee;">
+    <option value="">Select a new city</option>
+    @foreach (var city in cities)
+    {
+        <option value="@city.Name">@city.Name</option>
+    }
+</select>
+
+    
+    
+@if (weatherData == null)
+{
+    <br />
+    <br />
+    <p><i>Loading...</i></p>
+}
+else
+{
+    @if(weatherData.Current is not null && weatherData.CurrentUnits is not null){
+     <br />
+     <br />
+            <TelerikTileLayout Columns="3" Width="65%" Height="100%"
+                               ColumnWidth="300px"
+                               RowHeight="235px"
+                               Reorderable="true"
+                               Resizable="false">
+                <TileLayoutItems>
+                    <TileLayoutItem HeaderText="City" ColSpan="1">
+                        <Content>
+                            <RenderThisFragment>
+                                <div class="fs-2 text-center mt-4">@selectedCity</div>
+                            </RenderThisFragment>
+                        </Content>
+                    </TileLayoutItem>
+
+                    @*  My VS Community 2022 did not recognize the Telerik Map component,
+                        but I wanted to experiment with the component,
+                        so I had to use the code below instead of as a separate component.
+                        (This is well known issue in Visual Studio not to recognize a component.)
+                    *@
+                    <TileLayoutItem HeaderText="Map" ColSpan="2" RowSpan="2">
+                        <Content>
+                            <RenderThisFragment>
+
+                                <TelerikMap Zoom="5" Center="@Center">
+                                    <MapLayers>
+                                        <MapLayer Type="@MapLayersType.Tile"
+                                                  Attribution="@Attribution"
+                                                  Subdomains="@Subdomains"
+                                                  UrlTemplate="@UrlTemplate">
+                                        </MapLayer>
+
+                                        <MapLayer Type="@MapLayersType.Marker"
+                                                  Data="@MarkerData"
+                                                  LocationField="@nameof(MarkerModel.LatLng)"
+                                                  TitleField="@nameof(MarkerModel.Address)">
+                                            <MapLayerMarkerSettings>
+                                                <MapLayerMarkerSettingsTooltip>
+                                                    <Template>
+                                                        @{
+                                                            var dataItem = context.DataItem as MarkerModel;
+                                                        }
+
+                                                        <div>@(dataItem?.Address ?? "")</div>
+                                                    </Template>
+                                                </MapLayerMarkerSettingsTooltip>
+                                            </MapLayerMarkerSettings>
+                                        </MapLayer>
+
+
+                                    </MapLayers>
+
+                                </TelerikMap>
+                            </RenderThisFragment>
+                        </Content>
+                    </TileLayoutItem>
+
+                    <TileLayoutItem HeaderText="Temperature" ColSpan="1">
+                        <Content>
+                            <RenderThisFragment>
+                                <div class="fs-2 text-center mt-4 text-danger">
+                                    @weatherData.Current.Temperature2m @weatherData.CurrentUnits.Temperature2m
+                                    </div>
+                            </RenderThisFragment>
+                        </Content>
+                    </TileLayoutItem>
+
+                    <TileLayoutItem HeaderText="Rain probability" ColSpan="1">
+                        <Content>
+                            <RenderThisFragment>
+                                <div class="fs-2 text-center mt-4 text-primary">
+                                @weatherData.Current.PrecipitationProbability @weatherData.CurrentUnits.PrecipitationProbability
+                                </div>
+                            </RenderThisFragment>
+                        </Content>
+                    </TileLayoutItem>
+
+                    <TileLayoutItem HeaderText="Wind" ColSpan="1">
+                        <Content>
+                            <RenderThisFragment>
+                                <div class="fs-2 text-center mt-4 text-warning">
+                                @weatherData.Current.WindSpeed10m @weatherData.CurrentUnits.WindSpeed10m
+                                </div>
+                            </RenderThisFragment>
+                        </Content>
+                    </TileLayoutItem>
+
+                    <TileLayoutItem>
+                        <HeaderTemplate>
+                            <span class="text-dark">City Coordinates</span>
+                        </HeaderTemplate>
+                        <Content>
+                            <RenderThisFragment>
+                                <div class="fs-6 text-center mt-4 text-info">
+                                @weatherData.Timezone (@weatherData.Latitude, @weatherData.Longitude)
+                                </div>
+                            </RenderThisFragment>
+                        </Content>
+                    </TileLayoutItem>
+
+                </TileLayoutItems>
+            </TelerikTileLayout>
+    }
+    else
+    {
+        <h3>Select a city to see the weather.</h3>
+    }
+}
+</TelerikRootComponent>
+
+
+@code {
+    // Properties for the map
+    public string[] Subdomains { get; set; } = new string[] { "a", "b", "c" };
+    public string UrlTemplate { get; set; } = "https://#= subdomain #.tile.openstreetmap.org/#= zoom #/#= x #/#= y #.png";
+    public string Attribution { get; set; } = "&copy; <a href='https://osm.org/copyright'>OpenStreetMap contributors</a>";
+    public double[] Center { get; set; } = new double[] { 57.00, 17.00 };
+
+    public List<MarkerModel> MarkerData { get; set; } = new List<MarkerModel>()
+    {
+        new MarkerModel()
+        {
+            LatLng = new double[] { 59.4370, 24.7536 },
+            Address = "Tallinn",
+        },
+        new MarkerModel()
+        {
+            LatLng = new double[] { 60.1695, 24.9354 },
+            Address = "Helsinki",
+        },
+        new MarkerModel()
+        {
+            LatLng = new double[] { 59.3346, 18.0632 },
+            Address = "Stockholm",
+        },
+        new MarkerModel()
+        {
+            LatLng = new double[] { 59.9139, 10.7522 },
+            Address = "Oslo",
+        },
+        new MarkerModel()
+        {
+            LatLng = new double[] { 55.6761, 12.5683 },
+            Address = "Copenhagen",
+        },
+    };
+
+    public class MarkerModel
+    {
+        public double[]? LatLng { get; set; }
+        public string? Address { get; set; }
+    }
+
+
+
+    private WeatherData? weatherData;
+    private string selectedCity = string.Empty;
+    private string cityCoords = string.Empty;
+    private List<City> cities = new List<City>
+    {
+        new City { Name = "Tallinn", Latitude = 59.4370, Longitude = 24.7536 },
+        new City { Name = "Helsinki", Latitude = 60.1695, Longitude = 24.9354 },
+        new City { Name = "Stockholm", Latitude = 59.3346, Longitude = 18.0632 },
+        new City { Name = "Oslo", Latitude = 59.9139, Longitude = 10.7522 },
+        new City { Name = "Copenhagen", Latitude = 55.6761, Longitude = 12.5683 }
+    };
+
+    protected override async Task OnInitializedAsync()
+    {
+        // to simulate and check the page is stream loading
+        await Task.Delay(200);
+        // Default: display weather in Tallinn
+        selectedCity = "Tallinn";
+
+        // cast to the needed type, because they are registered as IWeatherService
+        var weatherService = ServiceProvider.GetServices<IWeatherService>().OfType<OpenWeatherService>().FirstOrDefault();
+        if (weatherService != null)
+        {
+            // Tallinn coordinates
+            weatherData = await weatherService.GetWeatherDataAsync("&latitude=59.4370&longitude=24.7536");
+        }
+    }
+
+    private async Task OnCityChanged(ChangeEventArgs e)
+    {
+        Logger.LogInformation($"***> OnCityChanged called with value: {e.Value}");
+
+        if (e.Value is not null)
+        {
+            // encoding the input to ensure it's safe
+            selectedCity = System.Net.WebUtility.HtmlEncode(e.Value.ToString()) ?? string.Empty;
+            var city = cities.FirstOrDefault(city => city.Name == selectedCity);
+            if (city is not null)
+            {
+                cityCoords = $"&latitude={city.Latitude}&longitude={city.Longitude}";
+                var weatherService = ServiceProvider.GetServices<IWeatherService>().OfType<OpenWeatherService>().FirstOrDefault();
+                if (weatherService != null)
+                {
+                    weatherData = await weatherService.GetWeatherDataAsync(cityCoords);
+                }
+            }
+            else
+            {
+                weatherData = null;
+                Logger.LogWarning($"***> City not found in the list of cities");
+            }
+        }
+        else
+        {
+            Logger.LogWarning("***> City not selected, value is null");
+            selectedCity = string.Empty;
+            weatherData = null;
+        }
+    }
+}

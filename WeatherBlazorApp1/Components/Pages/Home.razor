@@ -1,0 +1,10 @@
+﻿@page "/"
+
+<PageTitle>Home</PageTitle>
+
+@* when using @rendermode InteractiveServer along with @attribute [StreamRendering] 
+in Blazor 8.0. The combination can cause the data to be loaded twice, leading to visual flickering 
+https://learn.microsoft.com/en-us/aspnet/core/blazor/call-web-api?view=aspnetcore-8.0#prerendered-data
+You can also set prerendering to false here in this way:
+<OpenWeather @rendermode="new InteractiveServerRenderMode(prerender: false)"/>*@
+<OpenWeather />
