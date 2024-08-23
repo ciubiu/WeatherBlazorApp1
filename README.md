@@ -6,6 +6,7 @@
 - Add key OpenWeatherUrl in appsettings.json file with value:
 https://api.open-meteo.com/v1/forecast?timezone=auto&current=temperature_2m,precipitation_probability,wind_speed_10m"
 (Open-Meteo works without special API key. So this is just a reminder to keep sensitive data separate and not to load it to public repo.)
+- Also need to install Telerik Blazor UI library.
 
 #  Design decisions, areas of struggle, and challenges faced during the implementation.
 First I needed to understand what are the differences then developing Blazor or other ASP.NET project.
